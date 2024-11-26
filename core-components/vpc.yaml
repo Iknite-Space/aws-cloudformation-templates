@@ -1,12 +1,13 @@
 ---
+##
+# This template creates a VPC with four subnets in two AZs.
+#     The following four subnets are created:
+#    - A public subnet in the first AZ: 10.XXX.0.0/20
+#    - A private subnet in the first AZ: 10.XXX.16.0/20
+#    - B public subnet in the second AZ: 10.XXX.32.0/20
+#    - B private subnet in the second AZ: 10.XXX.48.0/20
 AWSTemplateFormatVersion: '2010-09-09'
-Description: |
-    This template allocates a VPC with a public and private subnet in two AZs.
-    The following four subnets are created:
-    - A public subnet in the first AZ: 10.XXX.0.0/20
-    - A private subnet in the first AZ: 10.XXX.16.0/20
-    - B public subnet in the second AZ: 10.XXX.32.0/20
-    - B private subnet in the second AZ: 10.XXX.48.0/20
+Description: "This template allocates a VPC with a public and private subnet in two AZs.""
 Parameters:
   ClassB:
     Description: 'Class B of VPC (10.XXX.0.0/16)'
@@ -98,7 +99,6 @@ Resources:
     DependsOn: VPCCidrBlock
     Type: 'AWS::EC2::Subnet'
     Properties:
-      #AssignIpv6AddressOnCreation: true # TODO can not be set if MapPublicIpOnLaunch is true as well
       AvailabilityZone: !Select [1, !GetAZs '']
       CidrBlock: !Sub '10.${ClassB}.32.0/20'
       Ipv6CidrBlock: !Select [2, !Cidr [!Select [0, !GetAtt 'VPC.Ipv6CidrBlocks'], 4, 64]]
@@ -129,7 +129,7 @@ Resources:
       - Key: EnvId
         Value: !Ref 'EnvId'
         
-  RouteTablePublic: # should be RouteTableAPublic, but logical id was not changed for backward compatibility
+  RouteTableAPublic:
     Type: 'AWS::EC2::RouteTable'
     Properties:
       VpcId: !Ref VPC
@@ -139,7 +139,7 @@ Resources:
       - Key: EnvId
         Value: !Ref 'EnvId'
 
-  RouteTablePrivate: # should be RouteTableAPrivate, but logical id was not changed for backward compatibility
+  RouteTableAPrivate:
     Type: 'AWS::EC2::RouteTable'
     Properties:
       VpcId: !Ref VPC
@@ -173,12 +173,12 @@ Resources:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
     Properties:
       SubnetId: !Ref SubnetAPublic
-      RouteTableId: !Ref RouteTablePublic
+      RouteTableId: !Ref RouteTableAPublic
   RouteTableAssociationAPrivate:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
     Properties:
       SubnetId: !Ref SubnetAPrivate
-      RouteTableId: !Ref RouteTablePrivate
+      RouteTableId: !Ref RouteTableAPrivate
   
   RouteTableAssociationBPublic:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
@@ -191,11 +191,11 @@ Resources:
       SubnetId: !Ref SubnetBPrivate
       RouteTableId: !Ref RouteTableBPrivate
   
-  RouteTablePublicInternetRoute: # should be RouteTablePublicAInternetRoute, but logical id was not changed for backward compatibility
+  RouteTablePublicAInternetRoute:
     Type: 'AWS::EC2::Route'
     DependsOn: VPCGatewayAttachment
     Properties:
-      RouteTableId: !Ref RouteTablePublic
+      RouteTableId: !Ref RouteTableAPublic
       DestinationCidrBlock: '0.0.0.0/0'
       GatewayId: !Ref InternetGateway
   
@@ -203,14 +203,14 @@ Resources:
     Type: 'AWS::EC2::Route'
     DependsOn: VPCGatewayAttachment
     Properties:
-      RouteTableId: !Ref RouteTablePublic
+      RouteTableId: !Ref RouteTableAPublic
       DestinationIpv6CidrBlock: '::/0'
       GatewayId: !Ref InternetGateway
   
   RouteTablePrivateAInternetRouteIPv6:
     Type: 'AWS::EC2::Route'
     Properties:
-      RouteTableId: !Ref RouteTablePrivate
+      RouteTableId: !Ref RouteTableAPrivate
       DestinationIpv6CidrBlock: '::/0'
       EgressOnlyInternetGatewayId: !Ref EgressOnlyInternetGateway
   
