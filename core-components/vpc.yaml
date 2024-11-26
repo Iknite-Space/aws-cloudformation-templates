@@ -7,7 +7,7 @@
 #    - B public subnet in the second AZ: 10.XXX.32.0/20
 #    - B private subnet in the second AZ: 10.XXX.48.0/20
 AWSTemplateFormatVersion: '2010-09-09'
-Description: "This template allocates a VPC with a public and private subnet in two AZs.""
+Description: "This template allocates a VPC with a public and private subnet in two AZs."
 Parameters:
   ClassB:
     Description: 'Class B of VPC (10.XXX.0.0/16)'
@@ -159,7 +159,7 @@ Resources:
       - Key: EnvId
         Value: !Ref 'EnvId'
 
-  RouteTableBPrivateO:
+  RouteTableBPrivate:
     Type: 'AWS::EC2::RouteTable'
     Properties:
       VpcId: !Ref VPC
