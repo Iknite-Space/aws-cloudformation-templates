@@ -197,7 +197,7 @@ Resources:
       Timeout: 60
       Code:
         S3Bucket: !Ref LambdaS3BucketName
-        S3Key: LambdaS3Key
+        S3Key: !Ref LambdaS3Key
       VpcConfig:
         SecurityGroupIds:
           - !Ref DatabaseInitLambdaSecurityGroup
