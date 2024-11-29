@@ -112,6 +112,7 @@ Resources:
     DependsOn:
       - DatabaseMasterCredential
     Properties:
+      DBName: postgres
       MasterUsername: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:username}}"]]
       MasterUserPassword: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:password}}"]]
       AllocatedStorage: !Ref DBAllocatedStorage
@@ -217,3 +218,19 @@ Outputs:
   DatabaseInitLambdaArn:
     Description: "The ARN of the lambda function that can be used to initialize the database."
     Value: !GetAtt DatabaseInitLambda.Arn
+
+  DatabaseInstanceEndpointAddress:
+    Description: "The endpoint of the database instance."
+    Value: !GetAtt DBInstance.Endpoint.Address
+
+  DatabaseMasterSecretId:
+    Description: "The secret id of the database admin."
+    Value: !Sub "/${EnvId}/DbAdminSecret"
+
+  DatabaseName:
+    Description: "The name of the database."
+    Value: !GetAtt DBInstance.DBName
+
+  DBName:
+    Description: "The name of the database."
+    Value: postgres
