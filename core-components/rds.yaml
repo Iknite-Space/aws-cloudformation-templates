@@ -66,12 +66,12 @@ Resources:
         - Key: EnvId
           Value: !Ref EnvId
 
-  SecretTargetAttachment:
-    Type: "AWS::SecretsManager::SecretTargetAttachment"
-    Properties:
-      TargetId: !Ref DBInstance
-      SecretId: !Ref "DatabaseMasterCredential"
-      TargetType: "AWS::RDS::DBInstance"
+  # SecretTargetAttachment:
+  #   Type: "AWS::SecretsManager::SecretTargetAttachment"
+  #   Properties:
+  #     TargetId: !Ref DBInstance
+  #     SecretId: !Ref "DatabaseMasterCredential"
+  #     TargetType: "AWS::RDS::DBInstance"
 
   ClientSecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
@@ -105,31 +105,31 @@ Resources:
         - Key: EnvId
           Value: !Ref "EnvId"
 
-  DBInstance:
-    DeletionPolicy: Snapshot
-    UpdateReplacePolicy: Snapshot
-    Type: "AWS::RDS::DBInstance"
-    DependsOn:
-      - DatabaseMasterCredential
-    Properties:
-      MasterUsername: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:username}}"]]
-      MasterUserPassword: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:password}}"]]
-      AllocatedStorage: !Ref DBAllocatedStorage
-      AllowMajorVersionUpgrade: false
-      AutoMinorVersionUpgrade: true
-      CopyTagsToSnapshot: true
-      DBInstanceClass: !Ref DBInstanceClass
-      DBSubnetGroupName: !Ref DBSubnetGroup
-      EnableIAMDatabaseAuthentication: true
-      Engine: postgres
-      EngineVersion: "16.4"
-      MultiAZ: false
-      StorageType: gp2
-      VPCSecurityGroups:
-        - !Ref DatabaseSecurityGroup
-      Tags:
-        - Key: EnvId
-          Value: !Ref "EnvId"
+  # DBInstance:
+  #   DeletionPolicy: Snapshot
+  #   UpdateReplacePolicy: Snapshot
+  #   Type: "AWS::RDS::DBInstance"
+  #   DependsOn:
+  #     - DatabaseMasterCredential
+  #   Properties:
+  #     MasterUsername: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:username}}"]]
+  #     MasterUserPassword: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:password}}"]]
+  #     AllocatedStorage: !Ref DBAllocatedStorage
+  #     AllowMajorVersionUpgrade: false
+  #     AutoMinorVersionUpgrade: true
+  #     CopyTagsToSnapshot: true
+  #     DBInstanceClass: !Ref DBInstanceClass
+  #     DBSubnetGroupName: !Ref DBSubnetGroup
+  #     EnableIAMDatabaseAuthentication: true
+  #     Engine: postgres
+  #     EngineVersion: "16.4"
+  #     MultiAZ: false
+  #     StorageType: gp2
+  #     VPCSecurityGroups:
+  #       - !Ref DatabaseSecurityGroup
+  #     Tags:
+  #       - Key: EnvId
+  #         Value: !Ref "EnvId"
 
 ## DatabaseInitLamba Resources
 # The following resources createa a custom Cloudformation resource type that
