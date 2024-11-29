@@ -58,7 +58,7 @@ Resources:
     Properties:
       Name: !Sub "/${EnvId}/DbAdminSecret"
       GenerateSecretString:
-        SecretStringTemplate: !Sub '{"username": "admin"}'
+        SecretStringTemplate: !Sub '{"username": "root"}'
         GenerateStringKey: "password"
         PasswordLength: 30
         ExcludePunctuation: true
