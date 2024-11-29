@@ -187,22 +187,22 @@ Resources:
               ]
             }
   
-  # DatabaseInitLambda:
-  #   Type: AWS::Lambda::Function
-  #   Properties:
-  #     Handler: index.handler
-  #     Role: !GetAtt DatabaseInitLambdaRole.Arn
-  #     ReservedConcurrentExecutions: 1
-  #     Runtime: python3.9
-  #     Timeout: 60
-  #     Code:
-  #       S3Bucket: !Ref LambdaS3BucketName
-  #       S3Key: LambdaS3Key
-  #     VpcConfig:
-  #       SecurityGroupIds:
-  #         - !Ref DatabaseInitLambdaSecurityGroup
-  #         - !Ref ClientSecurityGroup
-  #       SubnetIds: !Ref SubnetIds
+  DatabaseInitLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt DatabaseInitLambdaRole.Arn
+      ReservedConcurrentExecutions: 1
+      Runtime: python3.9
+      Timeout: 60
+      Code:
+        S3Bucket: !Ref LambdaS3BucketName
+        S3Key: LambdaS3Key
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref DatabaseInitLambdaSecurityGroup
+          - !Ref ClientSecurityGroup
+        SubnetIds: !Ref SubnetIds
 
 
 Outputs:
