@@ -8,6 +8,10 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: "CloudFormation template for creating an RDS instance with PostgreSQL engine."
 
 Parameters:
+  EnvId:
+    Description: "The environment id. This value will be used to tag and namespace the resources."
+    Type: String
+
   VpcId:
     Description: "VPC Id where the RDS instance will be created."
     Type: AWS::EC2::VPC::Id
@@ -15,6 +19,16 @@ Parameters:
   SubnetIds:
     Description: "Comma separated list of subnet ids where the RDS instance will be created."
     Type: List<AWS::EC2::Subnet::Id>
+
+  LambdaS3BucketName:
+    Description: Name of the s3 bucket holding the packaged lambda code.
+    Type: String
+  
+  LambdaS3Key:
+    Description: The 
+    Type: String
+
+## Optional parameters
 
   DBAllocatedStorage:
     Description: "The size of the database (in GB)."
@@ -28,27 +42,23 @@ Parameters:
     Type: String
     Default: "db.t3.micro"
 
-  DBAdminUsername:
-    Description: "The master user name for the DB instance ."
+  LambdaS3BucketName:
+    Description: Name of the s3 bucket holding the packaged lambda code.
     Type: String
-    Default: adminuser
-
-  DBName:
-    Description: "The name of the database to create when the DB instance is created. If this parameter is not specified, the default postgres database is created in the DB instance."
-    Type: String
-    Default: app
   
-  EnvId:
-    Description: "The environment id. This value will be used to tag and namespace the resources."
+  LambdaS3Key:
+    Description: The 
     Type: String
+
+
 
 Resources:
-  Secret:
+  DatabaseMasterCredential:
     Type: "AWS::SecretsManager::Secret"
     Properties:
       Name: !Sub "/${EnvId}/DbAdminSecret"
       GenerateSecretString:
-        SecretStringTemplate: !Sub '{"username": "${DBAdminUsername}"}'
+        SecretStringTemplate: !Sub '{"username": "admin"}'
         GenerateStringKey: "password"
         PasswordLength: 30
         ExcludePunctuation: true
@@ -60,7 +70,7 @@ Resources:
     Type: "AWS::SecretsManager::SecretTargetAttachment"
     Properties:
       TargetId: !Ref DBInstance
-      SecretId: !Ref "Secret"
+      SecretId: !Ref "DatabaseMasterCredential"
       TargetType: "AWS::RDS::DBInstance"
 
   ClientSecurityGroup:
@@ -99,23 +109,16 @@ Resources:
     DeletionPolicy: Snapshot
     UpdateReplacePolicy: Snapshot
     Type: "AWS::RDS::DBInstance"
+    DependsOn:
+      - DatabaseMasterCredential
     Properties:
-      MasterUsername: !Ref DBAdminUsername
-      MasterUserPassword:
-        !Join [
-          "",
-          [
-            "{{resolve:secretsmanager:",
-            !Ref Secret,
-            ":SecretString:password}}",
-          ],
-        ]
+      MasterUsername: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:username}}"]]
+      MasterUserPassword: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:password}}"]]
       AllocatedStorage: !Ref DBAllocatedStorage
       AllowMajorVersionUpgrade: false
       AutoMinorVersionUpgrade: true
       CopyTagsToSnapshot: true
       DBInstanceClass: !Ref DBInstanceClass
-      DBName: !Ref DBName
       DBSubnetGroupName: !Ref DBSubnetGroup
       EnableIAMDatabaseAuthentication: true
       Engine: postgres
@@ -128,10 +131,84 @@ Resources:
         - Key: EnvId
           Value: !Ref "EnvId"
 
+## DatabaseInitLamba Resources
+# The following resources createa a custom Cloudformation resource type that
+# can be used by other templates to configure this db instance (such as creating
+# service specific database).
+
+
+  DatabaseInitLambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "DB init Lambda security group"
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+      - IpProtocol: udp
+        FromPort: 53
+        ToPort: 53
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 5432
+        ToPort: 5432
+        CidrIp: 0.0.0.0/0
+  
+  DatabaseInitLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument: |
+        {
+          "Statement": [{
+            "Action": "sts:AssumeRole",
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "lambda.amazonaws.com"
+            }
+          }]
+        }
+      Policies:
+        - PolicyName: !Sub DatabaseInitLambdaRole-policy
+          PolicyDocument: |
+            {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "lambda:InvokeFunction",
+                    "ec2:*",
+                    "logs:*",
+                    "secretsmanager:*"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+  
+  DatabaseInitLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt DatabaseInitLambdaRole.Arn
+      ReservedConcurrentExecutions: 1
+      Runtime: python3.6
+      Timeout: 60
+      Code:
+        S3Bucket: !Ref LambdaS3BucketName
+        S3Key: LambdaS3Key
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref DatabaseInitLambdaSecurityGroup
+          - !Ref ClientSecurityGroup
+        SubnetIds: !Ref SubnetIds
+
+
 Outputs:
   AdminSecretArn:
     Description: "The ARN of the secret of the database admin."
-    Value: !Ref Secret
+    Value: !Ref DatabaseMasterCredential
 
 
   ClientSecurityGroupId:
