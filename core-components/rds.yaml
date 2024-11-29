@@ -214,3 +214,6 @@ Outputs:
     Description: "The security group clients should use to connect to the db."
     Value: !Ref ClientSecurityGroup
 
+  DatabaseInitLambdaArn:
+    Description: "The ARN of the lambda function that can be used to initialize the database."
+    Value: !GetAtt DatabaseInitLambda.Arn
