@@ -129,7 +129,7 @@ func getProperties(properties map[string]interface{}) (*RootDatabaseConfig, *Ser
 	}
 
 	if err := json.Unmarshal([]byte(rootConfigStr), rootConfig); err != nil {
-		return nil, nil, fmt.Errorf("failed to unmarshal root config: %w", err)
+		return nil, nil, fmt.Errorf("failed to unmarshal root config: json=%s %w", rootConfigStr, err)
 	}
 
 	if err := json.Unmarshal([]byte(serviceConfigStr), serviceConfig); err != nil {
