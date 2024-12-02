@@ -24,8 +24,11 @@ Parameters:
     Description: Name of the s3 bucket holding the packaged lambda code.
     Type: String
   
-  LambdaS3Key:
-    Description: The 
+  LambdaS3KeyPrefix:
+    Description: |
+      The prefix of the s3 key for the lambda code. The full key will be constructed
+      using the prefix and the location of the zip file relative to this tempalte.
+
     Type: String
 
 ## Optional parameters
