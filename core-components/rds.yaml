@@ -207,7 +207,7 @@ Resources:
         SecurityGroupIds:
           - !Ref DatabaseInitLambdaSecurityGroup
           - !Ref ClientSecurityGroup
-        SubnetIds: !Ref PublicSubnetIds
+        SubnetIds: !Ref SubnetIds
 
 
 Outputs:
