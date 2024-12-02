@@ -193,7 +193,7 @@ Resources:
     Properties:
       Handler: index.handler
       Role: !GetAtt DatabaseInitLambdaRole.Arn
-      Runtime: python3.9
+      Runtime: go1.x
       Timeout: 60
       Code:
         S3Bucket: !Ref LambdaS3BucketName
