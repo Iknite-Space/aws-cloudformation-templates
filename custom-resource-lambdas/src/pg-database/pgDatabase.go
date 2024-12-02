@@ -34,7 +34,7 @@ type ServiceDatabaseConfig struct {
 }
 
 func pgDatabaseResource(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
-	switch event.RequestType {
+	switch event.ResourceType {
 	case CustomTypeNamePgDatabase:
 		switch event.RequestType {
 		case cfn.RequestCreate:
