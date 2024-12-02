@@ -186,7 +186,7 @@ Resources:
   DatabaseInitLambda:
     Type: AWS::Lambda::Function
     Properties:
-      Handler:main 
+      Handler: main 
       Role: !GetAtt DatabaseInitLambdaRole.Arn
       Runtime: go1.x
       Timeout: 60
