@@ -160,6 +160,8 @@ Resources:
   DatabaseInitLambdaRole:
     Type: AWS::IAM::Role
     Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
       AssumeRolePolicyDocument: |
         {
           "Statement": [{
@@ -179,9 +181,11 @@ Resources:
                   "Effect": "Allow",
                   "Action": [
                     "lambda:InvokeFunction",
-                    "ec2:*",
                     "logs:*",
-                    "secretsmanager:*"
+                    "secretsmanager:*",
+                    "ec2:DescribeSecurityGroups",
+                    "ec2:DescribeSubnets",
+                    "ec2:DescribeVpcs"
                   ],
                   "Resource": "*"
                 }
@@ -199,6 +203,7 @@ Resources:
         S3Bucket: !Ref LambdaS3BucketName
         S3Key: !Sub '${LambdaS3KeyPrefix}/custom-resource-lambdas/zip/pgDatabase.zip'
       VpcConfig:
+        Ipv6AllowedForDualStack: true
         SecurityGroupIds:
           - !Ref DatabaseInitLambdaSecurityGroup
           - !Ref ClientSecurityGroup
