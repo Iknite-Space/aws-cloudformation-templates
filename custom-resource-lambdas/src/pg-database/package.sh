@@ -1,4 +1,4 @@
-#!/usrbin/env sh
+#!/usr/bin/env sh
 
 # this is just a temporary script while debugging
 

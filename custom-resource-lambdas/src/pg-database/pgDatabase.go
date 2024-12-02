@@ -12,6 +12,8 @@ import (
 const (
 	PropertyNameRootDatabaseConfig    = "RootDatabaseConfig"
 	PropertyNameServiceDatabaseConfig = "ServiceDatabaseConfig"
+
+	CustomTypeNamePgDatabase = "Custom::PgDatabase"
 )
 
 type RootDatabaseConfig struct {
@@ -33,15 +35,18 @@ type ServiceDatabaseConfig struct {
 
 func pgDatabaseResource(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	switch event.RequestType {
-	case cfn.RequestCreate:
-		return createDatabase(ctx, event)
-	case cfn.RequestUpdate:
-		return updateDatabase(ctx, event)
-	case cfn.RequestDelete:
-		return deleteDatabase(ctx, event)
+	case CustomTypeNamePgDatabase:
+		switch event.RequestType {
+		case cfn.RequestCreate:
+			return createDatabase(ctx, event)
+		case cfn.RequestUpdate:
+			return updateDatabase(ctx, event)
+		case cfn.RequestDelete:
+			return deleteDatabase(ctx, event)
+		}
 	}
 
-	return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
+	return "", nil, fmt.Errorf("unknown request type or resource: eventType=%s resourceType=%s", event.RequestType, event.ResourceType)
 
 }
 
