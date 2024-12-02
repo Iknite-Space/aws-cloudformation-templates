@@ -45,14 +45,6 @@ Parameters:
     Type: String
     Default: "db.t3.micro"
 
-  LambdaS3BucketName:
-    Description: Name of the s3 bucket holding the packaged lambda code.
-    Type: String
-  
-  LambdaS3Key:
-    Description: The 
-    Type: String
-
 
 
 Resources:
@@ -200,7 +192,7 @@ Resources:
       Timeout: 60
       Code:
         S3Bucket: !Ref LambdaS3BucketName
-        S3Key: !Ref LambdaS3Key
+        S3Key: !Sub '${LambdaS3KeyPrefix}/custom-resource-lambdas/zip/pgDatabase.zip'
       VpcConfig:
         SecurityGroupIds:
           - !Ref DatabaseInitLambdaSecurityGroup
