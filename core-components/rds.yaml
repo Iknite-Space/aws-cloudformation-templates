@@ -138,6 +138,24 @@ Resources:
 # service specific database).
 
 
+  DatabaseInitLambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "DB init Lambda security group"
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+      - IpProtocol: udp
+        FromPort: 53
+        ToPort: 53
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 5432
+        ToPort: 5432
+        CidrIp: 0.0.0.0/0
   
   DatabaseInitLambdaRole:
     Type: AWS::IAM::Role
@@ -182,6 +200,7 @@ Resources:
         S3Key: !Sub '${LambdaS3KeyPrefix}/custom-resource-lambdas/zip/pgDatabase.zip'
       VpcConfig:
         SecurityGroupIds:
+          - !Ref DatabaseInitLambdaSecurityGroup
           - !Ref ClientSecurityGroup
         SubnetIds: !Ref PublicSubnetIds
 
