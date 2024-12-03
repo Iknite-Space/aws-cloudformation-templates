@@ -7,11 +7,14 @@ import (
 
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/secretsmanager"
 )
 
 const (
-	PropertyNameRootDatabaseConfig    = "RootDatabaseConfig"
-	PropertyNameServiceDatabaseConfig = "ServiceDatabaseConfig"
+	PropertyNameAdminSecretArn   = "AdminSecretArn"
+	PropertyNameServiceSecretArn = "ServiceSecretArn"
 
 	CustomTypeNamePgDatabase = "Custom::PgDatabase"
 )
@@ -33,16 +36,20 @@ type ServiceDatabaseConfig struct {
 	Password string `json:"password"`
 }
 
-func pgDatabaseResource(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
+type CustomResourceManager struct {
+	secretsManager *secretsmanager.SecretsManager
+}
+
+func (c *CustomResourceManager) HandleCustomResourceEvent(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	switch event.ResourceType {
 	case CustomTypeNamePgDatabase:
 		switch event.RequestType {
 		case cfn.RequestCreate:
-			return createDatabase(ctx, event)
+			return c.createDatabase(ctx, event)
 		case cfn.RequestUpdate:
-			return updateDatabase(ctx, event)
+			return c.updateDatabase(ctx, event)
 		case cfn.RequestDelete:
-			return deleteDatabase(ctx, event)
+			return c.deleteDatabase(ctx, event)
 		}
 	}
 
@@ -50,8 +57,8 @@ func pgDatabaseResource(ctx context.Context, event cfn.Event) (string, map[strin
 
 }
 
-func createDatabase(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
-	rootConfig, serviceConfig, err := getProperties(event.ResourceProperties)
+func (c *CustomResourceManager) createDatabase(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
+	rootConfig, serviceConfig, err := c.getProperties(ctx, event.ResourceProperties)
 	if err != nil {
 		return "", nil, err
 	}
@@ -70,13 +77,13 @@ func createDatabase(_ context.Context, event cfn.Event) (string, map[string]inte
 
 }
 
-func updateDatabase(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
-	rootConfig, serviceConfig, err := getProperties(event.ResourceProperties)
+func (c *CustomResourceManager) updateDatabase(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
+	rootConfig, serviceConfig, err := c.getProperties(ctx, event.ResourceProperties)
 	if err != nil {
 		return "", nil, err
 	}
 
-	oldRootConfig, oldServiceConfg, err := getProperties(event.OldResourceProperties)
+	oldRootConfig, oldServiceConfg, err := c.getProperties(ctx, event.OldResourceProperties)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to get old properties: %w", err)
 	}
@@ -91,7 +98,7 @@ func updateDatabase(ctx context.Context, event cfn.Event) (string, map[string]in
 	// will call delete on the old database when we return a new physical resource ID
 	if oldRootConfig.DBInstanceIdentifier != rootConfig.DBInstanceIdentifier ||
 		oldServiceConfg.DBName != serviceConfig.DBName {
-		return createDatabase(ctx, event)
+		return c.createDatabase(ctx, event)
 	}
 
 	fmt.Println("Connecting to database: ", rootConfig.DBInstanceIdentifier)
@@ -101,8 +108,8 @@ func updateDatabase(ctx context.Context, event cfn.Event) (string, map[string]in
 	return physicalResourceID, nil, nil
 }
 
-func deleteDatabase(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
-	rootConfig, serviceConfig, err := getProperties(event.ResourceProperties)
+func (c *CustomResourceManager) deleteDatabase(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
+	rootConfig, serviceConfig, err := c.getProperties(ctx, event.ResourceProperties)
 	if err != nil {
 		return "", nil, err
 	}
@@ -114,31 +121,66 @@ func deleteDatabase(_ context.Context, event cfn.Event) (string, map[string]inte
 	return "", nil, nil
 }
 
-func getProperties(properties map[string]interface{}) (*RootDatabaseConfig, *ServiceDatabaseConfig, error) {
-	rootConfig := &RootDatabaseConfig{}
-	serviceConfig := &ServiceDatabaseConfig{}
+func (c *CustomResourceManager) getProperties(ctx context.Context, properties map[string]interface{}) (*RootDatabaseConfig, *ServiceDatabaseConfig, error) {
+	rootConfig := RootDatabaseConfig{}
+	serviceConfig := ServiceDatabaseConfig{}
 
-	rootConfigStr, ok := properties[PropertyNameRootDatabaseConfig].(string)
+	adminSecretArn, ok := properties[PropertyNameAdminSecretArn].(string)
 	if !ok {
 		return nil, nil, fmt.Errorf("RootDatabaseConfig must be a string")
 	}
 
-	serviceConfigStr, ok := properties[PropertyNameServiceDatabaseConfig].(string)
+	serviceSecretArn, ok := properties[PropertyNameServiceSecretArn].(string)
 	if !ok {
 		return nil, nil, fmt.Errorf("ServiceDatabaseConfig must be a string")
 	}
 
-	if err := json.Unmarshal([]byte(rootConfigStr), rootConfig); err != nil {
-		return nil, nil, fmt.Errorf("failed to unmarshal root config: json=%s %w", rootConfigStr, err)
+	err := c.getSecret(ctx, adminSecretArn, &rootConfig)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get admin secret: %w", err)
 	}
 
-	if err := json.Unmarshal([]byte(serviceConfigStr), serviceConfig); err != nil {
-		return nil, nil, fmt.Errorf("failed to unmarshal service config: %w", err)
+	err = c.getSecret(ctx, serviceSecretArn, &serviceConfig)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get service secret: %w", err)
 	}
 
-	return rootConfig, serviceConfig, nil
+	return &rootConfig, &serviceConfig, nil
+}
+
+func (c *CustomResourceManager) getSecret(ctx context.Context, secretArn string, dest any) error {
+
+	input := &secretsmanager.GetSecretValueInput{
+		SecretId: aws.String(secretArn),
+	}
+
+	result, err := c.secretsManager.GetSecretValueWithContext(ctx, input)
+	if err != nil {
+		return fmt.Errorf("failed to get secret: %w", err)
+	}
+
+	if result.SecretString == nil {
+		return fmt.Errorf("secret string is nil")
+	}
+
+	err = json.Unmarshal([]byte(*result.SecretString), dest)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal secret: %w", err)
+	}
+
+	return nil
 }
 
 func main() {
-	lambda.Start(cfn.LambdaWrap(pgDatabaseResource))
+	awsSession, err := session.NewSession()
+	if err != nil {
+		panic(err)
+	}
+	svc := secretsmanager.New(awsSession)
+
+	c := &CustomResourceManager{
+		secretsManager: svc,
+	}
+
+	lambda.Start(cfn.LambdaWrap(c.HandleCustomResourceEvent))
 }
