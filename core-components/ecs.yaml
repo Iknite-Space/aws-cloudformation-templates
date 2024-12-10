@@ -176,7 +176,8 @@ Resources:
     Properties:
       LaunchTemplateName: !Sub '${EnvId}-ecs-launch-template'
       LaunchTemplateData:
-        IamInstanceProfile: !Ref EC2InstanceProfile
+        IamInstanceProfile:
+          Arn: !Ref EC2InstanceProfile
         ImageId: !Ref LatestECSOptimizedAMI
         InstanceType: !Ref InstanceType
         KeyName: !Ref SshKeyPair
