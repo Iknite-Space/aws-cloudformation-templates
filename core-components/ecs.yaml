@@ -158,7 +158,9 @@ Resources:
     Type: "AWS::AutoScaling::AutoScalingGroup"
     Properties:
       VPCZoneIdentifier: !Ref PrivateSubnetIds
-      LaunchTemplate: !Ref ContainerInstances
+      LaunchTemplate:
+        LaunchTemplateId: !Ref ContainerInstances
+        Version: !GetAtt ContainerInstances.LatestVersionNumber
       MinSize: !Ref NumPrivateNodes
       MaxSize: !Ref NumPrivateNodes
       DesiredCapacity: !Ref NumPrivateNodes
