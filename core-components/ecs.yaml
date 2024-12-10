@@ -183,7 +183,7 @@ Resources:
         ImageId: !Ref LatestECSOptimizedAMI
         InstanceType: !Ref InstanceType
         KeyName: !Ref SshKeyPair
-        SecurityGroups: !Split [",", !Join [",", [!Ref EcsSecurityGroup, !Join [",", !Ref AdditionalNodeSecurityGroupIds]]]]
+        SecurityGroups: !Split [",", !Join [",", [!GetAtt EcsSecurityGroup.GroupId, !Join [",", !Ref AdditionalNodeSecurityGroupIds]]]]
         UserData: !Base64
           "Fn::Join":
             - ""
