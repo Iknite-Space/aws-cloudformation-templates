@@ -173,10 +173,7 @@ Resources:
     Type: "AWS::AutoScaling::LaunchConfiguration"
     Properties:
       ImageId: !Ref LatestECSOptimizedAMI
-      # SecurityGroups: !Split [",", !Join [",", [!Ref EcsSecurityGroup, !Ref AdditionalNodeSecurityGroupIds]]]
-      SecurityGroups:
-        - !Ref EcsSecurityGroup
-        - !Ref AdditionalNodeSecurityGroupIds
+      SecurityGroups: !Split [",", !Join [",", [!Ref EcsSecurityGroup, !Join [",", !Ref AdditionalNodeSecurityGroupIds]]]]
       InstanceType: !Ref InstanceType
       IamInstanceProfile: !Ref EC2InstanceProfile
       KeyName: !Ref SshKeyPair
