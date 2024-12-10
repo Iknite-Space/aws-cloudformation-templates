@@ -23,7 +23,7 @@ Parameters:
     Description: Number of instances to launch in the private subnet.
   NumPublicNodes:
     Type: Number
-    Default: "2"
+    Default: "0"
     Description: Number of instances to launch in the public subnet.
   InstanceType:
     Description: EC2 instance type
@@ -154,74 +154,50 @@ Resources:
 
 
 
-  # EcsSecurityGroupPrivateServices:
-  #   Type: "AWS::EC2::SecurityGroupIngress"
-  #   Properties:
-  #     GroupId: !Ref EcsSecurityGroup
-  #     IpProtocol: tcp
-  #     FromPort: 0
-  #     ToPort: 65535
-  #     SourceSecurityGroupId: !Ref EcsSecurityGroup
-
-  # EcsSecurityGroupSSHinbound:
-  #   Type: "AWS::EC2::SecurityGroupIngress"
-  #   Properties:
-  #     GroupId: !Ref EcsSecurityGroup
-  #     IpProtocol: tcp
-  #     FromPort: 22
-  #     ToPort: 22
-  #     CidrIp: 0.0.0.0/0
-
-
-
-  # ECSAutoScalingGroup:
-  #   Type: "AWS::AutoScaling::AutoScalingGroup"
-  #   Properties:
-  #     VPCZoneIdentifier: !Ref PrivateSubnetIds
-  #     LaunchConfigurationName: !Ref ContainerInstances
-  #     MinSize: !Ref NumPrivateNodes
-  #     MaxSize: !Ref NumPrivateNodes
-  #     DesiredCapacity: !Ref NumPrivateNodes
-  #   CreationPolicy:
-  #     ResourceSignal:
-  #       Timeout: PT15M
-  #   UpdatePolicy:
-  #     AutoScalingReplacingUpdate:
-  #       WillReplace: "true"
-
-  # ContainerInstances:
-  #   Type: "AWS::AutoScaling::LaunchConfiguration"
-  #   Properties:
-  #     ImageId: !Ref LatestECSOptimizedAMI
-  #     SecurityGroups: !Split [",", !Join [",", [!Ref EcsSecurityGroup, !Ref AdditionalNodeSecurityGroupIds]]]
-  #     InstanceType: !Ref InstanceType
-  #     IamInstanceProfile: !Ref EC2InstanceProfile
-  #     KeyName: !Ref SshKeyPair
-  #     UserData: !Base64
-  #       "Fn::Join":
-  #         - ""
-  #         - - |
-  #             #!/bin/bash -xe
-  #           - echo ECS_CLUSTER=
-  #           - !Ref Cluster
-  #           - |2
-  #              >> /etc/ecs/ecs.config
-  #           - |
-  #             echo  ECS_RESERVED_MEMORY=32 >> /etc/ecs/ecs.config
-  #           - |
-  #             yum install -y aws-cfn-bootstrap
-  #           - "/opt/aws/bin/cfn-signal -e $? "
-  #           - "         --stack "
-  #           - !Ref "AWS::StackName"
-  #           - "         --resource ECSAutoScalingGroup "
-  #           - "         --region "
-  #           - !Ref "AWS::Region"
-  #           - |+
-
-  LogGroup:
-    Type: AWS::Logs::LogGroup
+  ECSAutoScalingGroup:
+    Type: "AWS::AutoScaling::AutoScalingGroup"
     Properties:
-      LogGroupName: !Ref EnvId
+      VPCZoneIdentifier: !Ref PrivateSubnetIds
+      LaunchConfigurationName: !Ref ContainerInstances
+      MinSize: !Ref NumPrivateNodes
+      MaxSize: !Ref NumPrivateNodes
+      DesiredCapacity: !Ref NumPrivateNodes
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+    UpdatePolicy:
+      AutoScalingReplacingUpdate:
+        WillReplace: "true"
+
+  ContainerInstances:
+    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Properties:
+      ImageId: !Ref LatestECSOptimizedAMI
+      SecurityGroups: !Split [",", !Join [",", [!Ref EcsSecurityGroup, !Ref AdditionalNodeSecurityGroupIds]]]
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      KeyName: !Ref SshKeyPair
+      UserData: !Base64
+        "Fn::Join":
+          - ""
+          - - |
+              #!/bin/bash -xe
+            - echo ECS_CLUSTER=
+            - !Ref Cluster
+            - |2
+               >> /etc/ecs/ecs.config
+            - |
+              echo  ECS_RESERVED_MEMORY=32 >> /etc/ecs/ecs.config
+            - |
+              yum install -y aws-cfn-bootstrap
+            - "/opt/aws/bin/cfn-signal -e $? "
+            - "         --stack "
+            - !Ref "AWS::StackName"
+            - "         --resource ECSAutoScalingGroup "
+            - "         --region "
+            - !Ref "AWS::Region"
+            - |+
+
 
 
   CloudMapPrivateServiceDiscovery:
@@ -237,14 +213,6 @@ Outputs:
   Cluster:
     Description: The ECS cluster
     Value: !Ref Cluster
-
-  LogGroupName:
-    Description: "LogGroup configurations for various services"
-    Value: !Ref LogGroup
-
-  CloudWatchLogGroupArn:
-    Description: "LogGroup configurations Arn"
-    Value: !GetAtt LogGroup.Arn
 
   ClusterArn:
     Description: The ECS cluster Arn
