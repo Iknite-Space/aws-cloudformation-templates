@@ -1,0 +1,256 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "CloudFormation template for creating an ECS cluster backed by EC2 instances"
+Parameters:
+  EnvId:
+    Type: String
+    Description: Environment Id (used to namespace resources)
+    AllowedPattern: "[a-z][a-z0-9]{2,19}"
+    ConstraintDescription: Must be lower case letters between 3 and 20 characters.
+  VpcId:
+    Type: "AWS::EC2::VPC::Id"
+    Description: Select a VPC that allows instances to access the Internet.
+  PrivateSubnetIds:
+    Type: CommaDelimitedList
+    Description: Subnet ids where private workloads should run. I.e. workloads that should not be accessible via the public internet.
+  AdditionalNodeSecurityGroupIds:
+    Type: CommaDelimitedList
+    Description: Security group ids to attach to the ECS instances.
+
+  ## Optional parameters.
+  NumPrivateNodes:
+    Type: Number
+    Default: "2"
+    Description: Number of instances to launch in the private subnet.
+  NumPublicNodes:
+    Type: Number
+    Default: "2"
+    Description: Number of instances to launch in the public subnet.
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      [
+        t2.micro,
+        t2.small,
+        t2.medium,
+        t2.large,
+        m3.medium,
+        m3.large,
+        m3.xlarge,
+        m3.2xlarge,
+        m4.large,
+        m4.xlarge,
+        m4.2xlarge,
+        m4.4xlarge,
+        m4.10xlarge,
+        c4.large,
+        c4.xlarge,
+        c4.2xlarge,
+        c4.4xlarge,
+        c4.8xlarge,
+        c3.large,
+        c3.xlarge,
+        c3.2xlarge,
+        c3.4xlarge,
+        c3.8xlarge,
+        r3.large,
+        r3.xlarge,
+        r3.2xlarge,
+        r3.4xlarge,
+        r3.8xlarge,
+        i2.xlarge,
+        i2.2xlarge,
+        i2.4xlarge,
+        i2.8xlarge,
+      ]
+    ConstraintDescription: Please choose a valid instance type.
+  LatestECSOptimizedAMI:
+    Description: AMI ID
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: "/aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id"
+
+Resources:
+  SshKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: !Sub "${EnvId}-ecs-ec2-ssh-key"
+      KeyType: ed25519
+      Tags:
+        - Key: EnvId
+          Value: !Ref EnvId
+
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub "${EnvId}-cluster"
+
+  EC2Role:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      Policies:
+        - PolicyName: ecs-service
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ecs:CreateCluster"
+                  - "ecs:DeregisterContainerInstance"
+                  - "ecs:DiscoverPollEndpoint"
+                  - "ecs:Poll"
+                  - "ecs:RegisterContainerInstance"
+                  - "ecs:StartTelemetrySession"
+                  - "ecs:Submit*"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "*"
+
+  AutoscalingRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - application-autoscaling.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      Policies:
+        - PolicyName: service-autoscaling
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "application-autoscaling:*"
+                  - "cloudwatch:DescribeAlarms"
+                  - "cloudwatch:PutMetricAlarm"
+                  - "ecs:DescribeServices"
+                  - "ecs:UpdateService"
+                Resource: "*"
+
+  EC2InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: /
+      Roles:
+        - !Ref EC2Role
+
+  EcsSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: ECS Security Group
+      VpcId: !Ref VpcId
+
+
+
+  # EcsSecurityGroupPrivateServices:
+  #   Type: "AWS::EC2::SecurityGroupIngress"
+  #   Properties:
+  #     GroupId: !Ref EcsSecurityGroup
+  #     IpProtocol: tcp
+  #     FromPort: 0
+  #     ToPort: 65535
+  #     SourceSecurityGroupId: !Ref EcsSecurityGroup
+
+  # EcsSecurityGroupSSHinbound:
+  #   Type: "AWS::EC2::SecurityGroupIngress"
+  #   Properties:
+  #     GroupId: !Ref EcsSecurityGroup
+  #     IpProtocol: tcp
+  #     FromPort: 22
+  #     ToPort: 22
+  #     CidrIp: 0.0.0.0/0
+
+
+
+  # ECSAutoScalingGroup:
+  #   Type: "AWS::AutoScaling::AutoScalingGroup"
+  #   Properties:
+  #     VPCZoneIdentifier: !Ref PrivateSubnetIds
+  #     LaunchConfigurationName: !Ref ContainerInstances
+  #     MinSize: !Ref NumPrivateNodes
+  #     MaxSize: !Ref NumPrivateNodes
+  #     DesiredCapacity: !Ref NumPrivateNodes
+  #   CreationPolicy:
+  #     ResourceSignal:
+  #       Timeout: PT15M
+  #   UpdatePolicy:
+  #     AutoScalingReplacingUpdate:
+  #       WillReplace: "true"
+
+  # ContainerInstances:
+  #   Type: "AWS::AutoScaling::LaunchConfiguration"
+  #   Properties:
+  #     ImageId: !Ref LatestECSOptimizedAMI
+  #     SecurityGroups: !Split [",", !Join [",", [!Ref EcsSecurityGroup, !Ref AdditionalNodeSecurityGroupIds]]]
+  #     InstanceType: !Ref InstanceType
+  #     IamInstanceProfile: !Ref EC2InstanceProfile
+  #     KeyName: !Ref SshKeyPair
+  #     UserData: !Base64
+  #       "Fn::Join":
+  #         - ""
+  #         - - |
+  #             #!/bin/bash -xe
+  #           - echo ECS_CLUSTER=
+  #           - !Ref Cluster
+  #           - |2
+  #              >> /etc/ecs/ecs.config
+  #           - |
+  #             echo  ECS_RESERVED_MEMORY=32 >> /etc/ecs/ecs.config
+  #           - |
+  #             yum install -y aws-cfn-bootstrap
+  #           - "/opt/aws/bin/cfn-signal -e $? "
+  #           - "         --stack "
+  #           - !Ref "AWS::StackName"
+  #           - "         --resource ECSAutoScalingGroup "
+  #           - "         --region "
+  #           - !Ref "AWS::Region"
+  #           - |+
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Ref EnvId
+
+
+  CloudMapPrivateServiceDiscovery:
+    Type: AWS::ServiceDiscovery::HttpNamespace
+    Properties:
+      Description: "Private namespace for ECS Service Discovery"
+      Name: !Sub "${EnvId}"
+      Tags: 
+        - Key: EnvId
+          Value: !Ref EnvId
+
+Outputs:
+  Cluster:
+    Description: The ECS cluster
+    Value: !Ref Cluster
+
+  LogGroupName:
+    Description: "LogGroup configurations for various services"
+    Value: !Ref LogGroup
+
+  CloudWatchLogGroupArn:
+    Description: "LogGroup configurations Arn"
+    Value: !GetAtt LogGroup.Arn
+
+  ClusterArn:
+    Description: The ECS cluster Arn
+    Value: !GetAtt Cluster.Arn
+
+  EcsSecurityGroupId:
+    Description: The ECS security group id
+    Value: !Ref EcsSecurityGroup
+
