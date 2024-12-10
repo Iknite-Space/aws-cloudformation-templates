@@ -184,7 +184,8 @@ Resources:
         InstanceType: !Ref InstanceType
         KeyName: !Ref SshKeyPair
         # SecurityGroups: !Split [",", !Join [",", [!GetAtt EcsSecurityGroup.GroupId]]] #, !Join [",", !Ref AdditionalNodeSecurityGroupIds]]]]
-        SecurityGroups: !Ref AdditionalNodeSecurityGroupIds
+        SecurityGroups:
+          - sg-00b73be7025bcc8df
         UserData: !Base64
           "Fn::Join":
             - ""
