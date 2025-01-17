@@ -197,7 +197,7 @@ Resources:
     Properties:
       Handler: main 
       Role: !GetAtt DatabaseInitLambdaRole.Arn
-      Runtime: go1.x
+      Runtime: provided.al2023
       Timeout: 60
       Code:
         S3Bucket: !Ref LambdaS3BucketName

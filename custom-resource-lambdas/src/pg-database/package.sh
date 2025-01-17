@@ -2,8 +2,8 @@
 
 # this is just a temporary script while debugging
 
-GOOS=linux GOARCH=amd64 go build -tags lambda.norpc -o main ./...
+GOARCH=amd64 GOOS=linux go build -tags lambda.norpc -o bootstrap ./...
 
 rm ../../zip/pgDatabase.zip
-zip ../../zip/pgDatabase.zip main
+zip ../../zip/pgDatabase.zip bootstrap
 
