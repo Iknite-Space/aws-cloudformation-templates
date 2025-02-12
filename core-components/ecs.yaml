@@ -152,7 +152,14 @@ Resources:
       GroupDescription: ECS Security Group
       VpcId: !Ref VpcId
 
-
+  EcsSecurityGroupInboundFromEcsSecurityGroup:
+    Type: "AWS::EC2::SecurityGroupIngress"
+    Properties:
+      GroupId: !Ref EcsSecurityGroup
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 61000
+      SourceSecurityGroupId: !Ref EcsSecurityGroup
 
   ECSAutoScalingGroup:
     Type: "AWS::AutoScaling::AutoScalingGroup"
@@ -171,19 +178,27 @@ Resources:
       AutoScalingReplacingUpdate:
         WillReplace: "true"
 
-  
-
   ContainerInstances:
     Type: AWS::EC2::LaunchTemplate
     Properties:
-      LaunchTemplateName: !Sub '${EnvId}-ecs-launch-template'
+      LaunchTemplateName: !Sub "${EnvId}-ecs-launch-template"
       LaunchTemplateData:
         IamInstanceProfile:
           Arn: !GetAtt EC2InstanceProfile.Arn
         ImageId: !Ref LatestECSOptimizedAMI
         InstanceType: !Ref InstanceType
         KeyName: !Ref SshKeyPair
-        SecurityGroupIds: !Split [",", !Join [",", [!GetAtt EcsSecurityGroup.GroupId, !Join [",", !Ref AdditionalNodeSecurityGroupIds]]]]
+        SecurityGroupIds:
+          !Split [
+            ",",
+            !Join [
+              ",",
+              [
+                !GetAtt EcsSecurityGroup.GroupId,
+                !Join [",", !Ref AdditionalNodeSecurityGroupIds],
+              ],
+            ],
+          ]
         UserData: !Base64
           "Fn::Join":
             - ""
@@ -211,7 +226,7 @@ Resources:
     Properties:
       Description: "Private namespace for ECS Service Discovery"
       Name: !Sub "${EnvId}"
-      Tags: 
+      Tags:
         - Key: EnvId
           Value: !Ref EnvId
 
@@ -227,4 +242,3 @@ Outputs:
   EcsSecurityGroupId:
     Description: The ECS security group id
     Value: !Ref EcsSecurityGroup
-
