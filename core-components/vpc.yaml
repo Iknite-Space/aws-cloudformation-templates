@@ -444,7 +444,7 @@ Resources:
   RouteTablePrivateAInternetRoute:
     Type: "AWS::EC2::Route"
     Condition: IsDevelopmentGrade
-    DependsOn: DVPCGatewayAttachment
+    DependsOn: VPCGatewayAttachment
     Properties:
       RouteTableId: !Ref RouteTableAPrivate
       DestinationCidrBlock: "0.0.0.0/0"
