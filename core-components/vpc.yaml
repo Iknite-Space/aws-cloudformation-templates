@@ -9,6 +9,11 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "This template allocates a VPC with a public and private subnet in two AZsterm."
 Parameters:
+  MigratingGrade:
+    Type: String
+    Description: "Set this flag to true if migrating from development to production grade, or vice versa. This will disable both production and development resources temporarily."
+    AllowedValues: ["true", "false"]
+    Default: "false"
   IsDevelopmentGrade:
     Type: String
     Description: "Flag to determine if the setup is for development grade"
@@ -32,8 +37,12 @@ Conditions:
   # Development grade environments require less resources and are cheaper. Production grade environments require more 
   # resources and are more expensive. Production grade environments are also more secure because the private subnets are
   # not connected to the internet.
-  IsDevelopmentGrade: !Equals [!Ref IsDevelopmentGrade, "true"]
-  IsProductionGrade: !Not [!Equals [!Ref IsDevelopmentGrade, "true"]]
+  IsDevelopmentGrade: !And
+    - !Equals [!Ref MigratingGrade, "false"]
+    - !Equals [!Ref IsDevelopmentGrade, "true"]
+  IsProductionGrade:
+    - !Equals [!Ref MigratingGrade, "false"]
+    - !Not [!Equals [!Ref IsDevelopmentGrade, "true"]]
 
 Resources:
   VPC:
