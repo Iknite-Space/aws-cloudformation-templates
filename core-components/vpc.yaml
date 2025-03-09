@@ -9,11 +9,11 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "This template allocates a VPC with a public and private subnet in two AZsterm."
 Parameters:
-IsDevelopmentGrade:
-  Type: String
-  Description: "Flag to determine if the setup is for development grade"
-  AllowedValues: ["true", "false"]
-  Default: "false"
+  IsDevelopmentGrade:
+    Type: String
+    Description: "Flag to determine if the setup is for development grade"
+    AllowedValues: ["true", "false"]
+    Default: "false"
   ClassB:
     Description: "Class B of VPC (10.XXX.0.0/16)"
     Type: Number
