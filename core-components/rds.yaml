@@ -12,6 +12,12 @@ Parameters:
     Description: "The environment id. This value will be used to tag and namespace the resources."
     Type: String
 
+  IsDevelopmentGrade:
+    Description: "If true, the RDS instance will be created with minimal resources."
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+
   VpcId:
     Description: "VPC Id where the RDS instance will be created."
     Type: AWS::EC2::VPC::Id
@@ -50,6 +56,9 @@ Parameters:
     Type: String
     Default: "db.t3.micro"
 
+
+Conditions:
+  IsDevelopmentGrade: !Equals [!Ref IsDevelopmentGrade, "true"]
 
 
 Resources:
@@ -112,6 +121,7 @@ Resources:
     DependsOn:
       - DatabaseMasterCredential
     Properties:
+      PubliclyAccessible: !If [IsDevelopmentGrade, true, false]
       DBName: postgres
       MasterUsername: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:username}}"]]
       MasterUserPassword: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:password}}"]]
