@@ -112,6 +112,7 @@ Resources:
       CidrBlock: !Sub "10.${ClassB}.16.0/20"
       Ipv6CidrBlock:
         !Select [1, !Cidr [!Select [0, !GetAtt "VPC.Ipv6CidrBlocks"], 4, 64]]
+      MapPublicIpOnLaunch: !If [IsDevelopmentGrade, true, false]
       VpcId: !Ref VPC
       Tags:
         - Key: Name
@@ -149,6 +150,7 @@ Resources:
       CidrBlock: !Sub "10.${ClassB}.48.0/20"
       Ipv6CidrBlock:
         !Select [3, !Cidr [!Select [0, !GetAtt "VPC.Ipv6CidrBlocks"], 4, 64]]
+      MapPublicIpOnLaunch: !If [IsDevelopmentGrade, true, false]
       VpcId: !Ref VPC
       Tags:
         - Key: Name
