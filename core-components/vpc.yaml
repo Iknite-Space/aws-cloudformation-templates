@@ -40,7 +40,7 @@ Conditions:
   IsDevelopmentGrade: !And
     - !Equals [!Ref MigratingGrade, "false"]
     - !Equals [!Ref IsDevelopmentGrade, "true"]
-  IsProductionGrade:
+  IsProductionGrade: !And
     - !Equals [!Ref MigratingGrade, "false"]
     - !Not [!Equals [!Ref IsDevelopmentGrade, "true"]]
 
