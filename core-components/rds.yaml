@@ -107,9 +107,9 @@ Resources:
 
   DevelopmentInboudRule:
     Type: AWS::EC2::SecurityGroupIngress
+    Condition: IsDevelopmentGrade
     Properties:
       CidrIp: "0.0.0.0/0"
-      CidrIpv6: "::/0"
       FromPort: 5432
       ToPort: 5432
       GroupId: !Ref DatabaseSecurityGroup
