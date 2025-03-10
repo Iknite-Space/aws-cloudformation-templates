@@ -105,6 +105,17 @@ Resources:
         - Key: EnvId
           Value: !Ref "EnvId"
 
+  DevelopmentInboudRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      CidrIp: "0.0.0.0/0"
+      CidrIpv6: "::/0"
+      FromPort: 5432
+      ToPort: 5432
+      GroupId: !Ref DatabaseSecurityGroup
+      IpProtocol: tcp
+
+
   DBSubnetGroup:
     Type: "AWS::RDS::DBSubnetGroup"
     Properties:
