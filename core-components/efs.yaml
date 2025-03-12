@@ -10,7 +10,10 @@ Parameters:
   EfsSecurityGroupId:
     Type: AWS::EC2::SecurityGroup::Id
     Description: "Security Group ID for EFS access from other services"
-
+  SubnetA:
+    Type: AWS::EC2::Subnet::Id
+  SubnetB:
+    Type: AWS::EC2::Subnet::Id
 Resources:
   Efs:
     Type: AWS::EFS::FileSystem
@@ -30,21 +33,29 @@ Resources:
       ToPort: 2049
       SourceSecurityGroupId: !Ref EfsSecurityGroupId
   EfsMountTarget1:
-        Type: AWS::EFS::MountTarget
-        Properties:
-            FileSystemId:
-                Ref: Efs
-            SubnetId: !Ref SubnetA
-            SecurityGroups:
-                - Ref: "EfsSecurityGroup"
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId:
+        Ref: Efs
+      SubnetId: !Ref SubnetA
+      SecurityGroups:
+        - Ref: "EfsSecurityGroup"
   EfsMountTarget2:
-        Type: AWS::EFS::MountTarget
-        Properties:
-            FileSystemId:
-                Ref: Efs
-            SubnetId: !Ref SubnetB
-            SecurityGroups:
-                - Ref: "EfsSecurityGroup"
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId:
+        Ref: Efs
+      SubnetId: !Ref SubnetB
+      SecurityGroups:
+        - Ref: "EfsSecurityGroup"
+  ClientSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: !Ref "AWS::StackName"
+      VpcId: !Ref VpcId
+      Tags:
+        - Key: EnvId
+          Value: !Ref "EnvId"
 
 Outputs:
   FileSystemId:
@@ -53,3 +64,6 @@ Outputs:
   SecurityGroupId:
     Value: !Ref EfsSecurityGroup
     Description: "EFS Security Group ID"
+  ClientSecurityGroupId:
+    Description: "The security group clients should use to connect to the db."
+    Value: !GetAtt ClientSecurityGroup.GroupId
