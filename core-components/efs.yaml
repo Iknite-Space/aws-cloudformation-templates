@@ -1,6 +1,9 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: This template creates an EFS File System with Mount Targets
 Parameters:
+  EnvId: 
+    Type: String
+    Description: Environment ID
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: "VPC ID"
