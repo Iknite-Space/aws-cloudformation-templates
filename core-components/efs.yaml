@@ -4,12 +4,6 @@ Parameters:
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: "VPC ID"
-  SubnetIds:
-    Type: List<AWS::EC2::Subnet::Id>
-    Description: "List of Subnet IDs for Mount Targets"
-  EfsSecurityGroupId:
-    Type: AWS::EC2::SecurityGroup::Id
-    Description: "Security Group ID for EFS access from other services"
   SubnetA:
     Type: AWS::EC2::Subnet::Id
   SubnetB:
@@ -31,7 +25,7 @@ Resources:
       IpProtocol: tcp
       FromPort: 2049
       ToPort: 2049
-      SourceSecurityGroupId: !Ref EfsSecurityGroupId
+      SourceSecurityGroupId: !Ref EfsSecurityGroup
   EfsMountTarget1:
     Type: AWS::EFS::MountTarget
     Properties:
