@@ -24,11 +24,11 @@ Resources:
   EfsSecurityGroupNFSinbound:
     Type: "AWS::EC2::SecurityGroupIngress"
     Properties:
-      GroupId: !Ref ClientSecurityGroup 
+      GroupId: !Ref EfsSecurityGroup
       IpProtocol: tcp
       FromPort: 2049
       ToPort: 2049
-      SourceSecurityGroupId: !Ref EfsSecurityGroup
+      SourceSecurityGroupId: !Ref ClientSecurityGroup 
   EfsMountTarget1:
     Type: AWS::EFS::MountTarget
     Properties:
