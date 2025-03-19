@@ -223,7 +223,9 @@ Resources:
       Code:
         S3Bucket: !Ref LambdaS3BucketName
         S3Key: !Sub '${LambdaS3KeyPrefix}/custom-resource-lambdas/zip/pgDatabase.zip'
+      # If this stack is development grade the lambda does not need to live in the vpc
       VpcConfig:
+        Ipv6AllowedForDualSta: !If [IsDevelopmentGrade, false, true]
         SecurityGroupIds: !If [IsDevelopmentGrade, [], [!Ref DatabaseInitLambdaSecurityGroup, !Ref ClientSecurityGroup]]
         SubnetIds: !If [IsDevelopmentGrade, [], !Ref SubnetIds]
 
