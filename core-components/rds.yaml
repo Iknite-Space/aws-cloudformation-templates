@@ -224,11 +224,8 @@ Resources:
         S3Bucket: !Ref LambdaS3BucketName
         S3Key: !Sub '${LambdaS3KeyPrefix}/custom-resource-lambdas/zip/pgDatabase.zip'
       VpcConfig:
-        Ipv6AllowedForDualStack: true
-        SecurityGroupIds:
-          - !Ref DatabaseInitLambdaSecurityGroup
-          - !Ref ClientSecurityGroup
-        SubnetIds: !Ref PublicSubnetIds
+        SecurityGroupIds: !If [IsDevelopmentGrade, null, [!Ref DatabaseInitLambdaSecurityGroup, !Ref ClientSecurityGroup]]
+        SubnetIds: !If [IsDevelopmentGrade, null, !Ref SubnetIds]
 
 
 Outputs:
