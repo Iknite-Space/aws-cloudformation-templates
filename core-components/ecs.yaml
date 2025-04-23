@@ -235,7 +235,17 @@ Resources:
               - |2
                 >> /etc/ecs/ecs.config
               - |
-                echo  ECS_RESERVED_MEMORY=32 >> /etc/ecs/ecs.config
+                echo  ECS_RESERVED_MEMORY=256 >> /etc/ecs/ecs.config
+              - |
+                sudo fallocate -l 1G /swapfile
+              - |
+                sudo chmod 600 /swapfile
+              - |
+                sudo mkswap /swapfile
+              - |
+                sudo swapon /swapfile
+              - |
+                echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
               - |
                 yum install -y aws-cfn-bootstrap
               - "/opt/aws/bin/cfn-signal -e $? "
