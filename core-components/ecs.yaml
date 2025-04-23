@@ -17,6 +17,12 @@ Parameters:
     Description: Security group ids to attach to the ECS instances.
 
   ## Optional parameters.
+  IsDevelopmentGrade:
+    Type: String
+    Description: "Flag to determine if the setup is for development grade"
+    AllowedValues: ["true", "false"]
+    Default: "false"
+
   NumPrivateNodes:
     Type: Number
     Default: "2"
@@ -69,6 +75,15 @@ Parameters:
     Description: AMI ID
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: "/aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id"
+
+Conditions:
+  # These conditions determine whether resources should be created based on the environment type.
+  # Development grade environments require less resources and are cheaper. Production grade environments require more 
+  # resources and are more expensive. Production grade environments are also more secure because the private subnets are
+  # not connected to the internet.
+  IsDevelopmentGrade: !Equals [!Ref IsDevelopmentGrade, "true"]
+  IsProductionGrade: !Not [!Equals [!Ref IsDevelopmentGrade, "true"]]
+
 
 Resources:
   SshKeyPair:
@@ -160,6 +175,17 @@ Resources:
       FromPort: 10
       ToPort: 61000
       SourceSecurityGroupId: !Ref EcsSecurityGroup
+
+    # This rule is only added for development grade environments. It allows inbound ssh access from anywhere.
+  EcsSecurityGroupInboundFromAnywhere:
+    Type: "AWS::EC2::SecurityGroupIngress"
+    Condition: IsDevelopmentGrade
+    Properties:
+      GroupId: !Ref EcsSecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: 0.0.0.0/0
 
   ECSAutoScalingGroup:
     Type: "AWS::AutoScaling::AutoScalingGroup"
