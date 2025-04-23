@@ -157,7 +157,7 @@ Resources:
     Properties:
       GroupId: !Ref EcsSecurityGroup
       IpProtocol: tcp
-      FromPort: 80
+      FromPort: 10
       ToPort: 61000
       SourceSecurityGroupId: !Ref EcsSecurityGroup
 
