@@ -235,7 +235,7 @@ Resources:
               - |2
                 >> /etc/ecs/ecs.config
               - |
-                echo  ECS_RESERVED_MEMORY=256 >> /etc/ecs/ecs.config
+                echo  ECS_RESERVED_MEMORY=32 >> /etc/ecs/ecs.config
               - |
                 sudo fallocate -l 1G /swapfile
               - |
