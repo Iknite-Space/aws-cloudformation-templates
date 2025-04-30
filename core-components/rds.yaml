@@ -134,6 +134,7 @@ Resources:
     Properties:
       PubliclyAccessible: !If [IsDevelopmentGrade, true, false]
       DBName: postgres
+      StorageEncrypted: true
       MasterUsername: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:username}}"]]
       MasterUserPassword: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:password}}"]]
       AllocatedStorage: !Ref DBAllocatedStorage
