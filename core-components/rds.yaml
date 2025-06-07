@@ -263,7 +263,3 @@ Outputs:
   DatabaseName:
     Description: "The name of the database."
     Value: !GetAtt DBInstance.DBName
-
-  DBName:
-    Description: "The name of the database."
-    Value: !Ref DBName
