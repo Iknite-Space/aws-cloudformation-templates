@@ -63,8 +63,7 @@ Parameters:
   DBInstanceSnapshotArn:
     Type: String
     Default: ""
-
-
+  
 Conditions:
   IsDevelopmentGrade: !Equals [!Ref IsDevelopmentGrade, "true"]
 
@@ -141,7 +140,6 @@ Resources:
       - DatabaseMasterCredential
     Properties:
       PubliclyAccessible: !If [IsDevelopmentGrade, true, false]
-      DBName: postgres
       StorageEncrypted: !Ref StorageEncrypted
       MasterUsername: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:username}}"]]
       MasterUserPassword: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:password}}"]]
@@ -268,4 +266,4 @@ Outputs:
 
   DBName:
     Description: "The name of the database."
-    Value: postgres
+    Value: !Ref DBName
