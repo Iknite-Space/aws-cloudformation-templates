@@ -64,6 +64,10 @@ Parameters:
     Type: String
     Default: ""
   
+  EngineVersion:
+    Type: String
+    Default: "16.4"
+  
 Conditions:
   IsDevelopmentGrade: !Equals [!Ref IsDevelopmentGrade, "true"]
 
@@ -152,7 +156,7 @@ Resources:
       DBSubnetGroupName: !Ref DBSubnetGroup
       EnableIAMDatabaseAuthentication: true
       Engine: postgres
-      EngineVersion: "16.4"
+      EngineVersion: !Ref EngineVersion
       MultiAZ: false
       StorageType: gp2
       VPCSecurityGroups:
