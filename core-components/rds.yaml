@@ -55,6 +55,14 @@ Parameters:
     Description: "The compute and memory capacity of the DB instance, for example db.m5.large. "
     Type: String
     Default: "db.t3.micro"
+  
+  StorageEncrypted:
+    Type: String
+    Default: true
+
+  DBInstanceSnapshotArn:
+    Type: String
+    Default: ""
 
 
 Conditions:
@@ -134,7 +142,7 @@ Resources:
     Properties:
       PubliclyAccessible: !If [IsDevelopmentGrade, true, false]
       DBName: postgres
-      StorageEncrypted: true
+      StorageEncrypted: !Ref StorageEncrypted
       MasterUsername: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:username}}"]]
       MasterUserPassword: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:password}}"]]
       AllocatedStorage: !Ref DBAllocatedStorage
@@ -142,6 +150,7 @@ Resources:
       AutoMinorVersionUpgrade: true
       CopyTagsToSnapshot: true
       DBInstanceClass: !Ref DBInstanceClass
+      DBInstanceSnapshotArn: !Ref DBInstanceSnapshotArn
       DBSubnetGroupName: !Ref DBSubnetGroup
       EnableIAMDatabaseAuthentication: true
       Engine: postgres
