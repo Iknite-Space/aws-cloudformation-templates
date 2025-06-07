@@ -150,7 +150,7 @@ Resources:
       AutoMinorVersionUpgrade: true
       CopyTagsToSnapshot: true
       DBInstanceClass: !Ref DBInstanceClass
-      DBInstanceSnapshotArn: !Ref DBInstanceSnapshotArn
+      DBSnapshotIdentifier: !Ref DBInstanceSnapshotArn
       DBSubnetGroupName: !Ref DBSubnetGroup
       EnableIAMDatabaseAuthentication: true
       Engine: postgres
