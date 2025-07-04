@@ -11,11 +11,25 @@ Parameters:
     Type: AWS::EC2::Subnet::Id
   SubnetB:
     Type: AWS::EC2::Subnet::Id
+  ThroughputMode:
+    Type: String
+    Default: bursting
+  ProvisionedThroughputInMibps:
+    Type: Number
+    Default: 128
+  BackupStatusPolicyStatus:
+    Type: String
+    Description: Can take two values; ENABLED or DISABLED. The default value is DISABLED.
+    Default: DISABLED
 Resources:
   Efs:
     Type: AWS::EFS::FileSystem
     Properties:
       Encrypted: true
+      BackupPolicy:
+        Status: !Ref BackupStatusPolicyStatus
+      ThroughputMode: !Ref ThroughputMode
+      ProvisionedThroughputInMibps: !Ref ProvisionedThroughputInMibps
   EfsSecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
