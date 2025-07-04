@@ -17,7 +17,7 @@ Parameters:
   ProvisionedThroughputInMibps:
     Type: Number
     Default: 128
-  BackupStatusPolicyStatus:
+  BackupPolicyStatus:
     Type: String
     Description: Can take two values; ENABLED or DISABLED. The default value is DISABLED.
     Default: DISABLED
@@ -27,7 +27,7 @@ Resources:
     Properties:
       Encrypted: true
       BackupPolicy:
-        Status: !Ref BackupStatusPolicyStatus
+        Status: !Ref BackupPolicyStatus
       ThroughputMode: !Ref ThroughputMode
       ProvisionedThroughputInMibps: !Ref ProvisionedThroughputInMibps
   EfsSecurityGroup:
