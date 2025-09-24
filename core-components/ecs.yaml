@@ -36,7 +36,7 @@ Parameters:
     Type: String
     Default: t2.micro
     AllowedValues:
-      [
+      [ t3.micro,
         t2.micro,
         t2.small,
         t2.medium,
