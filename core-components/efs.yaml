@@ -14,7 +14,7 @@ Parameters:
   ThroughputMode:
     Type: String
     Default: bursting
-  ProvisionedThroughputInMibps:
+  IProvisionedThroughputInMibps:
     Type: Number
     Default: 128
   BackupPolicyStatus:
@@ -29,7 +29,7 @@ Resources:
       BackupPolicy:
         Status: !Ref BackupPolicyStatus
       ThroughputMode: !Ref ThroughputMode
-      ProvisionedThroughputInMibps: !Ref ProvisionedThroughputInMibps
+      # ProvisionedThroughputInMibps: !Ref ProvisionedThroughputInMibps
   EfsSecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
