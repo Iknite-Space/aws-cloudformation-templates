@@ -26,11 +26,6 @@ Parameters:
     Description: "Comma separated list of subnet ids where the RDS instance will be created."
     Type: List<AWS::EC2::Subnet::Id>
   
-
-  PublicSubnetIds:
-    Description: "Comma separated list of subnet ids where lambda will run."
-    Type: List<AWS::EC2::Subnet::Id>
-
   LambdaS3BucketName:
     Description: Name of the s3 bucket holding the packaged lambda code.
     Type: String
