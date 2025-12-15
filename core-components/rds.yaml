@@ -37,6 +37,14 @@ Parameters:
 
     Type: String
 
+  DBAdminUsername:
+    Type: String
+    Default: root
+
+  DBName:
+    Type: String
+    Default: postgres
+
 ## Optional parameters
 
   DBAllocatedStorage:
@@ -74,7 +82,7 @@ Resources:
     Properties:
       Name: !Sub "/${EnvId}/DbAdminSecret"
       GenerateSecretString:
-        SecretStringTemplate: !Sub '{"username": "root"}'
+        SecretStringTemplate: !Sub '{"username": "${DBAdminUsername}"}'
         GenerateStringKey: "password"
         PasswordLength: 30
         ExcludePunctuation: true
@@ -139,7 +147,7 @@ Resources:
     DependsOn:
       - DatabaseMasterCredential
     Properties:
-      DBName: !If [IsDBInstanceSnapshotArnEmpty, "postgres", ""]
+      DBName: !If [IsDBInstanceSnapshotArnEmpty, !Ref DBName, ""]
       PubliclyAccessible: !If [IsDevelopmentGrade, true, false]
       StorageEncrypted: !Ref StorageEncrypted
       MasterUsername: !Join ["",["{{resolve:secretsmanager:",!Ref DatabaseMasterCredential,":SecretString:username}}"]]
